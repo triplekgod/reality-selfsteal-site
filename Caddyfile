@@ -1,0 +1,34 @@
+{
+	email {$ACME_EMAIL}
+	admin off
+}
+# Container-only endpoint used by the Docker health check.
+http://127.0.0.1:2015 {
+	respond /healthz "ok" 200
+	respond 404
+}
+
+{$SITE_DOMAIN} {
+	root * /srv/{$SITE_VARIANT}
+	encode zstd gzip
+
+	@health path /healthz
+	respond @health "ok" 200
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		Content-Security-Policy "default-src 'self'; style-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+		-Server
+	}
+
+	file_server
+	log {
+		output stdout
+		format console
+	}
+}
+

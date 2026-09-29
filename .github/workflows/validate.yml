@@ -1,0 +1,29 @@
+name: validate
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  configuration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare test environment
+        run: cp .env.example .env
+
+      - name: Validate shell syntax
+        run: bash -n deploy.sh preflight.sh check.sh
+
+      - name: Validate Docker Compose
+        run: docker compose config --quiet
+
+      - name: Validate Caddy configuration
+        run: >-
+          docker compose run --rm --no-deps cover-site
+          caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
